@@ -861,9 +861,6 @@ static void prvAddNewTaskToReadyList( TCB_t * pxNewTCB ) PRIVILEGED_FUNCTION;
         TCB_t * pxNewTCB;
         BaseType_t xReturn;
 			
-/********************************************E.C. : initialize the period ****************************************************/
-			  pxNewTCB->xTaskPeriod = period;
-/*****************************************************************************************************************************/
 
         /* If the stack grows down then allocate the stack then the TCB so the stack
          * does not grow into the TCB.  Likewise if the stack grows up then allocate
@@ -932,10 +929,16 @@ static void prvAddNewTaskToReadyList( TCB_t * pxNewTCB ) PRIVILEGED_FUNCTION;
             #endif /* tskSTATIC_AND_DYNAMIC_ALLOCATION_POSSIBLE */
 
             prvInitialiseNewTask( pxTaskCode, pcName, ( uint32_t ) usStackDepth, pvParameters, uxPriority, pxCreatedTask, pxNewTCB, NULL );
-					
+								
+/********************************************E.C. : initialize the period ****************************************************/
+			      pxNewTCB->xTaskPeriod = period;
+/*****************************************************************************************************************************/								
+													
 /*********************************E.C. : insert the period value in the state list iteam before to add the task in RL: ************/
 				    listSET_LIST_ITEM_VALUE( &( ( pxNewTCB )->xStateListItem ), ( pxNewTCB)->xTaskPeriod + xTickCount);
-/**********************************************************************************************************************************/        
+/**********************************************************************************************************************************/ 
+
+								
             prvAddNewTaskToReadyList( pxNewTCB );
             xReturn = pdPASS;
         }
