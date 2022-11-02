@@ -2172,7 +2172,7 @@ void vTaskStartScheduler( void )
 /***********************************************E.C. : *****************************************************************/
 					#if(configUSE_EDF_SCHEDULER == 1)
 					{
-						TickType_t initIDLEPeriod = 100;
+						TickType_t initIDLEPeriod = 150;
 						
 					xReturn = xTaskPeriodicCreate( prvIdleTask,
                                    "IDLE",
