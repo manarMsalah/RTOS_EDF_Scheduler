@@ -189,8 +189,7 @@ int main( void )
                     ( void * ) 0,    /* Parameter passed into the task. */
                     1,/* Priority at which the task is created. */
                     &Load2SimulationTaskHandle,/* Used to pass out the created task's handle. */
-										LOAD_2_SIMULATION_TASK_PERIOD );/* Task's period. */
-										
+										LOAD_2_SIMULATION_TASK_PERIOD );/* Task's period. */							
 										
 
 	/* Now all the tasks have been started - start the scheduler.
@@ -286,7 +285,7 @@ void Button_1_Monitor( void * pvParameters )
 			else /* To make the WCET = BCET. */
 			{
 				levelCounter++;
-				if(levelCounter > 0)
+				if(levelCounter == 1)
 				{
 				  txMonitor1Message= 'L';
 				  xQueueOverwrite( Button1MonitorQueueHandle , &txMonitor1Message );
@@ -349,7 +348,7 @@ void Button_2_Monitor( void * pvParameters )
 			else /* To make the WCET = BCET. */
 			{
 				levelCounter++;
-				if(levelCounter > 0)
+				if(levelCounter == 1)
 				{
 				  txMonitor2Message= 'L';
 				  xQueueOverwrite( Button2MonitorQueueHandle , &txMonitor2Message );
@@ -402,7 +401,7 @@ void Uart_Receiver( void * pvParameters )
 	char RxMonitor1Message, RxMonitor2Message;
 	char* edgeMessage; 
 	char RxString[50];
-	int i, numOfCycles = 2400;/* 2400= 12000*0.2 and 0.2 is the excution time  */
+	int i, numOfCycles = 2400;/* 2400= 12000*0.2 and 0.2 is the excution time of receiving the string from periodic transmitter task.  */
 	
    /* Initialise the xLastWakeTime variable with the current time. */
   xLastWakeTimeUartReceiver = xTaskGetTickCount();
@@ -415,7 +414,7 @@ void Uart_Receiver( void * pvParameters )
 			if(xQueueReceive( PeriodicTransmitterQueueHandle, &( RxString[0] ), ( TickType_t ) 0 ))
 			{	
 				i=1;
-			  while(RxString[i]!= '\0')
+			  while(RxString[i-1]!= '\0')
 				{			
 					xQueueReceive( PeriodicTransmitterQueueHandle, ( RxString+i ), ( TickType_t ) 0 );
 					i++;
@@ -433,40 +432,47 @@ void Uart_Receiver( void * pvParameters )
 			{
 			  if(RxMonitor1Message == 'R')
 				{
-				  edgeMessage= "\n\n                                 Rising edge in button 1\n";
+				  edgeMessage= "\n\n                                 Rising edge from button 1\n";
 					vSerialPutString( (signed char *)edgeMessage, strlen(edgeMessage) );			
 				}
 				else if(RxMonitor1Message == 'F')
 				{
-				  edgeMessage= "\n\n                                 Falling edge in button 1\n";
+				  edgeMessage= "\n\n                                Falling edge from button 1\n";
 					vSerialPutString( (signed char *)edgeMessage, strlen(edgeMessage) );			
 				}
         else if(RxMonitor1Message == 'L')
 				{
-				  edgeMessage= "                            ";
+				  edgeMessage= "                                                                ";
 					vSerialPutString( (signed char *)edgeMessage, strlen(edgeMessage) );
-				}				
+				}			
 			}
+
       /* Receiving from Button 2 Monitor Task. */			
 			else if(xQueueReceive( Button2MonitorQueueHandle, &( RxMonitor2Message ), ( TickType_t ) 0 ))
 			{
 				if(RxMonitor2Message == 'R')
 				{
-				  edgeMessage= "\n\n                                 Rising edge in button 2\n";
+				  edgeMessage= "\n\n                                 Rising edge from button 2\n";
 					vSerialPutString( (signed char *)edgeMessage, strlen(edgeMessage) );	
 				}
 				else if(RxMonitor2Message == 'F')
 				{
-				  edgeMessage= "\n\n                                 Falling edge in button 2\n";
+				  edgeMessage= "\n\n                                Falling edge from button 2\n";
 					vSerialPutString( (signed char *)edgeMessage, strlen(edgeMessage) );	
 				}
 				else if(RxMonitor2Message == 'L')
 				{
-				  edgeMessage= "                           ";
+				  edgeMessage= "                                                                 ";
 					vSerialPutString( (signed char *)edgeMessage, strlen(edgeMessage) );	
 				}	
 				
 			}
+			else /* Just for making the BCET nearest thing to WCET. */
+			{
+				edgeMessage= "                                                                 ";
+				vSerialPutString( (signed char *)edgeMessage, strlen(edgeMessage) );
+			}
+
 			
 			
 			GPIO_write(PORT_0, PIN6, PIN_IS_LOW);
