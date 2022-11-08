@@ -3278,6 +3278,7 @@ void vTaskSwitchContext( void )
 				#else
 		   	{
 					pxCurrentTCB = (TCB_t * ) listGET_OWNER_OF_HEAD_ENTRY( &(xReadyTasksListEDF ) );
+					traceTASK_SWITCHED_IN();
 				}
 				#endif
 /*********************************************************************************************************************/

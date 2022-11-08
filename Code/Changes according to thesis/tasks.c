@@ -929,16 +929,14 @@ static void prvAddNewTaskToReadyList( TCB_t * pxNewTCB ) PRIVILEGED_FUNCTION;
             #endif /* tskSTATIC_AND_DYNAMIC_ALLOCATION_POSSIBLE */
 
             prvInitialiseNewTask( pxTaskCode, pcName, ( uint32_t ) usStackDepth, pvParameters, uxPriority, pxCreatedTask, pxNewTCB, NULL );
-								
+
 /********************************************E.C. : initialize the period ****************************************************/
 			      pxNewTCB->xTaskPeriod = period;
-/*****************************************************************************************************************************/								
-													
+/*****************************************************************************************************************************/
+					
 /*********************************E.C. : insert the period value in the state list iteam before to add the task in RL: ************/
 				    listSET_LIST_ITEM_VALUE( &( ( pxNewTCB )->xStateListItem ), ( pxNewTCB)->xTaskPeriod + xTickCount);
-/**********************************************************************************************************************************/ 
-
-								
+/**********************************************************************************************************************************/        
             prvAddNewTaskToReadyList( pxNewTCB );
             xReturn = pdPASS;
         }
@@ -2979,7 +2977,18 @@ BaseType_t xTaskIncrementTick( void )
                         mtCOVERAGE_TEST_MARKER();
                     }
 										
-
+										
+										
+/********************************************************Missing Change************************************************/
+										
+			              #if ( configUSE_EDF_SCHEDULER == 1 )
+			              {
+											/*Update the deadline of the task. */
+			                listSET_LIST_ITEM_VALUE( &( pxTCB->xStateListItem ), ( pxTCB)->xTaskPeriod + xTickCount);
+			              }
+			              #endif
+/*********************************************************************************************************************/
+										
                     /* Place the unblocked task into the appropriate ready
                      * list. */
                     prvAddTaskToReadyList( pxTCB );
@@ -2988,7 +2997,27 @@ BaseType_t xTaskIncrementTick( void )
                      * context switch if preemption is turned off. */
                     #if ( configUSE_PREEMPTION == 1 )
                         {
-																				
+/**********************************************************Missing Change**********************************************/													
+													#if ( configUSE_EDF_SCHEDULER == 1)
+			                    {
+														
+														/* Preemption is on, but a context switch should
+                             * only be performed if the unblocked task has a
+                             * a deadline that is equal to or lower than the
+                             * currently executing task. */
+														if(  pxTCB->xStateListItem.xItemValue <= pxCurrentTCB->xStateListItem.xItemValue )
+                            {
+                                xSwitchRequired = pdTRUE;
+                            }
+                            else
+                            {
+                                mtCOVERAGE_TEST_MARKER();
+                            }			                     
+			                    }
+/************************************************************************************************************************/													
+													#else
+													{
+											
                             /* Preemption is on, but a context switch should
                              * only be performed if the unblocked task has a
                              * priority that is equal to or higher than the
@@ -3001,6 +3030,8 @@ BaseType_t xTaskIncrementTick( void )
                             {
                                 mtCOVERAGE_TEST_MARKER();
                             }
+												  }
+													#endif
                         }
                     #endif /* configUSE_PREEMPTION */
                 }
@@ -3247,6 +3278,7 @@ void vTaskSwitchContext( void )
 				#else
 		   	{
 					pxCurrentTCB = (TCB_t * ) listGET_OWNER_OF_HEAD_ENTRY( &(xReadyTasksListEDF ) );
+					traceTASK_SWITCHED_IN();
 				}
 				#endif
 /*********************************************************************************************************************/
@@ -3634,8 +3666,16 @@ static portTASK_FUNCTION( prvIdleTask, pvParameters )
     for( ; ; )
     {
 			
-		
-
+			
+/************************************************Missing Change************************************************************/
+			/*Update the deadline of the IdleTask. */
+			#if ( configUSE_EDF_SCHEDULER == 1 )
+			{
+			   listSET_LIST_ITEM_VALUE( &( ( prvGetTCBFromHandle(xIdleTaskHandle))->xStateListItem ), ( ( prvGetTCBFromHandle(xIdleTaskHandle)))->xTaskPeriod + xTickCount);
+			}
+			#endif
+/*************************************************************************************************************************/
+			
         /* See if any tasks have deleted themselves - if so then the idle task
          * is responsible for freeing the deleted task's TCB and stack. */
         prvCheckTasksWaitingTermination();
