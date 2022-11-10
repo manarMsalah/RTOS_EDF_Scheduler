@@ -83,6 +83,7 @@
 #define UART_RECEIVER_TASK_PERIOD            20
 #define LOAD_1_SIMULATION_TASK_PERIOD        10
 #define LOAD_2_SIMULATION_TASK_PERIOD        100
+#define PRINT_STATS_TASK_PERIOD              100
 
 /* The created queue's handle. */
 QueueHandle_t Button1MonitorQueueHandle = NULL;
@@ -96,6 +97,7 @@ TaskHandle_t PeriodicTransmitterTaskHandle = NULL;
 TaskHandle_t UartReceiverTaskHandle = NULL;
 TaskHandle_t Load1SimulationTaskHandle = NULL;
 TaskHandle_t Load2SimulationTaskHandle = NULL;
+TaskHandle_t PrintStatsTaskHandle = NULL;
 
 /*
  * Configure the processor for use with the Keil demo board.  This is very
@@ -110,6 +112,8 @@ void Periodic_Transmitter (void *pvParameters);
 void Uart_Receiver (void *pvParameters);
 void Load_1_Simulation (void *pvParameters);
 void Load_2_Simulation (void *pvParameters);
+
+void Print_Stats (void *pvParameters);
 /*-----------------------------------------------------------*/
 
 /* Global variables to take time stamps for every task and calculate the cpu load. */
@@ -120,6 +124,9 @@ int task_4_in_time = 0, task_4_out_time = 0, task_4_total_time = 0;
 int task_5_in_time = 0, task_5_out_time = 0, task_5_total_time = 0;
 int task_6_in_time = 0, task_6_out_time = 0, task_6_total_time = 0;
 int system_time = 0, cpu_load = 0;
+
+
+char runTimeStatsBuff[200];
 
 /*
  * Application entry point:
@@ -140,7 +147,7 @@ int main( void )
 	
 	xTaskPeriodicCreate(
                     Button_1_Monitor,       /* Function that implements the task. */
-                    "Button 1 Monitor",          /* Text name for the task. */
+                    "Button1 Monitor",          /* Text name for the task. */
                     100,      /* Stack size in words, not bytes. */
                     ( void * ) 0,    /* Parameter passed into the task. */
                     1,/* Priority at which the task is created. */
@@ -150,7 +157,7 @@ int main( void )
 										
 	xTaskPeriodicCreate(
                     Button_2_Monitor,       /* Function that implements the task. */
-                    "Button_2 Monitor",          /* Text name for the task. */
+                    "Button2 Monitor",          /* Text name for the task. */
                     100,      /* Stack size in words, not bytes. */
                     ( void * ) 0,    /* Parameter passed into the task. */
                     1,/* Priority at which the task is created. */
@@ -197,8 +204,22 @@ int main( void )
                     ( void * ) 0,    /* Parameter passed into the task. */
                     1,/* Priority at which the task is created. */
                     &Load2SimulationTaskHandle,/* Used to pass out the created task's handle. */
-										LOAD_2_SIMULATION_TASK_PERIOD );/* Task's period. */							
+										LOAD_2_SIMULATION_TASK_PERIOD );/* Task's period. */	
+
 										
+										
+	/* Task to get and print stats in run-time for verification. */									
+	xTaskPeriodicCreate(
+                    Print_Stats,       /* Function that implements the task. */
+                    "Print Stats",          /* Text name for the task. */
+                    100,      /* Stack size in words, not bytes. */
+                    ( void * ) 0,    /* Parameter passed into the task. */
+                    1,/* Priority at which the task is created. */
+                    &PrintStatsTaskHandle,/* Used to pass out the created task's handle. */
+										PRINT_STATS_TASK_PERIOD );/* Task's period. */									
+										
+										
+								
 
 	/* Now all the tasks have been started - start the scheduler.
 
@@ -306,6 +327,7 @@ void Button_1_Monitor( void * pvParameters )
 				}
 			}
 				
+			
 			/* Wait for the next cycle. */
       vTaskDelayUntil( &xLastWakeTimeButton1Monitor, xFrequency );
 		
@@ -369,6 +391,8 @@ void Button_2_Monitor( void * pvParameters )
 					button2PreviousState = button2CurrentState;
 				}
 			}	
+			
+
 						
 			/* Wait for the next cycle. */
       vTaskDelayUntil( &xLastWakeTimeButton2Monitor, xFrequency );
@@ -380,8 +404,8 @@ void Periodic_Transmitter( void * pvParameters )
 {
   TickType_t xLastWakeTimePeriodicTransmitter;
   const TickType_t xFrequency = PERIODIC_TRANSMITTER_TASK_PERIOD; 
-	char txString[]= "\nImplemented EDF Scheduler successfully";
-	char i;
+	char txString[]= "\nImplemented EDF Scheduler successfully\n";
+	char i,X;
 	char strLength= strlen(txString);
 	
   /* Initialise the xLastWakeTime variable with the current time. */
@@ -398,6 +422,7 @@ void Periodic_Transmitter( void * pvParameters )
 			{
 				xQueueSend( PeriodicTransmitterQueueHandle, (&(txString[0]))+i, ( TickType_t )0 );
 			}
+				
 			
 			/* Wait for the next cycle. */
 		  vTaskDelayUntil( &xLastWakeTimePeriodicTransmitter, xFrequency );
@@ -435,6 +460,7 @@ void Uart_Receiver( void * pvParameters )
 					i++;
 				}
 				vSerialPutString( (signed char *)RxString, strlen(RxString) );
+				
 			}
 			else
 			{
@@ -479,17 +505,10 @@ void Uart_Receiver( void * pvParameters )
 				{
 				  edgeMessage= "                                                                 ";
 					vSerialPutString( (signed char *)edgeMessage, strlen(edgeMessage) );	
-				}	
-				
+				}				
 			}
-			else /* Just for making the BCET nearest thing to WCET. */
-			{
-				edgeMessage= "                                                                 ";
-				vSerialPutString( (signed char *)edgeMessage, strlen(edgeMessage) );
-			}
-
 			
-			
+		
       /* Wait for the next cycle. */
       vTaskDelayUntil( &xLastWakeTimeUartReceiver, xFrequency );
 			
@@ -513,8 +532,7 @@ void Load_1_Simulation( void * pvParameters )
     for( ;; )
     {
         /* Task code goes here. */
-			
-			for(i=0; i< numOfCycles; i++); /* Excution time = 5 ms. */
+						for(i=0; i< numOfCycles; i++); /* Excution time = 5 ms. */
 			
       /* Wait for the next cycle. */
 		  vTaskDelayUntil( &xLastWakeTimeLoad1Simulation, xFrequency );
@@ -541,12 +559,36 @@ void Load_2_Simulation( void * pvParameters )
         /* Task code goes here. */
 			
 			for(i=0; i< numOfCycles; i++); /* Excution time = 12 ms. */
-					
+			
+						
 			/* Wait for the next cycle. */
 		  vTaskDelayUntil( &xLastWakeTimeLoad2Simulation, xFrequency );
 
     }
 		
+}
+/***********************************************************************************************************************************/
+void Print_Stats (void *pvParameters)
+{
+	 TickType_t xLastWakeTimePrintStats;
+   const TickType_t xFrequency = PRINT_STATS_TASK_PERIOD; 
+   
+   /* Initialise the xLastWakeTime variable with the current time. */
+   xLastWakeTimePrintStats = xTaskGetTickCount();
+	
+    for( ;; )
+    {
+        /* Task code goes here. */
+			
+        vTaskGetRunTimeStats( runTimeStatsBuff );
+				xSerialPutChar('\n');
+			  vSerialPutString( runTimeStatsBuff , strlen(runTimeStatsBuff));
+										
+		  	/* Wait for the next cycle. */
+		   vTaskDelayUntil( &xLastWakeTimePrintStats, xFrequency );
+
+    }
+	
 }
 /**********************************************************************************************************************************/
 void vApplicationTickHook(void)

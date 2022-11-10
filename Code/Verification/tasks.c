@@ -2701,12 +2701,20 @@ char * pcTaskGetName( TaskHandle_t xTaskToQuery ) /*lint !e971 Unqualified char 
             {
                 /* Fill in an TaskStatus_t structure with information on each
                  * task in the Ready state. */
+/****************************************************************Missing change***********************************************************/							
+							if(configUSE_EDF_SCHEDULER == 0)
+							{
                 do
                 {
                     uxQueue--;
                     uxTask += prvListTasksWithinSingleList( &( pxTaskStatusArray[ uxTask ] ), &( pxReadyTasksLists[ uxQueue ] ), eReady );
                 } while( uxQueue > ( UBaseType_t ) tskIDLE_PRIORITY ); /*lint !e961 MISRA exception as the casts are only redundant for some ports. */
-
+							}
+							else
+							{
+                    uxTask += prvListTasksWithinSingleList( &( pxTaskStatusArray[ uxTask ] ), &( xReadyTasksListEDF ), eReady );   
+						  }
+/*****************************************************************************************************************************************/
                 /* Fill in an TaskStatus_t structure with information on each
                  * task in the Blocked state. */
                 uxTask += prvListTasksWithinSingleList( &( pxTaskStatusArray[ uxTask ] ), ( List_t * ) pxDelayedTaskList, eBlocked );
@@ -2979,7 +2987,7 @@ BaseType_t xTaskIncrementTick( void )
 										
 										
 										
-/********************************************************Missing Change************************************************/
+/********************************************************Missing change***********************************************************/
 										
 			              #if ( configUSE_EDF_SCHEDULER == 1 )
 			              {
@@ -2997,7 +3005,7 @@ BaseType_t xTaskIncrementTick( void )
                      * context switch if preemption is turned off. */
                     #if ( configUSE_PREEMPTION == 1 )
                         {
-/**********************************************************Missing Change**********************************************/													
+/**********************************************************Missing change***********************************************/													
 													#if ( configUSE_EDF_SCHEDULER == 1)
 			                    {
 														
@@ -3667,7 +3675,7 @@ static portTASK_FUNCTION( prvIdleTask, pvParameters )
     {
 			
 			
-/************************************************Missing Change************************************************************/
+/************************************************Missing change************************************************************/
 			/*Update the deadline of the IdleTask. */
 			#if ( configUSE_EDF_SCHEDULER == 1 )
 			{
@@ -4829,7 +4837,8 @@ static void prvResetNextTaskUnblockTime( void )
         if( pxTaskStatusArray != NULL )
         {
             /* Generate the (binary) data. */
-            uxArraySize = uxTaskGetSystemState( pxTaskStatusArray, uxArraySize, &ulTotalTime );
+            uxArraySize = 
+					( pxTaskStatusArray, uxArraySize, &ulTotalTime );
 
             /* For percentage calculations. */
             ulTotalTime /= 100UL;
