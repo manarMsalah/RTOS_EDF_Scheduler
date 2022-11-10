@@ -2979,7 +2979,7 @@ BaseType_t xTaskIncrementTick( void )
 										
 										
 										
-/********************************************************Missing Change************************************************/
+/********************************************************Missing change************************************************/
 										
 			              #if ( configUSE_EDF_SCHEDULER == 1 )
 			              {
@@ -2997,7 +2997,7 @@ BaseType_t xTaskIncrementTick( void )
                      * context switch if preemption is turned off. */
                     #if ( configUSE_PREEMPTION == 1 )
                         {
-/**********************************************************Missing Change**********************************************/													
+/**********************************************************Missing change**********************************************/													
 													#if ( configUSE_EDF_SCHEDULER == 1)
 			                    {
 														
@@ -3667,7 +3667,7 @@ static portTASK_FUNCTION( prvIdleTask, pvParameters )
     {
 			
 			
-/************************************************Missing Change************************************************************/
+/************************************************Missing change************************************************************/
 			/*Update the deadline of the IdleTask. */
 			#if ( configUSE_EDF_SCHEDULER == 1 )
 			{
