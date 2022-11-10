@@ -2976,18 +2976,7 @@ BaseType_t xTaskIncrementTick( void )
                     {
                         mtCOVERAGE_TEST_MARKER();
                     }
-										
-										
-										
-/********************************************************Missing Change************************************************/
-										
-			              #if ( configUSE_EDF_SCHEDULER == 1 )
-			              {
-											/*Update the deadline of the task. */
-			                listSET_LIST_ITEM_VALUE( &( pxTCB->xStateListItem ), ( pxTCB)->xTaskPeriod + xTickCount);
-			              }
-			              #endif
-/*********************************************************************************************************************/
+
 										
                     /* Place the unblocked task into the appropriate ready
                      * list. */
@@ -2997,26 +2986,7 @@ BaseType_t xTaskIncrementTick( void )
                      * context switch if preemption is turned off. */
                     #if ( configUSE_PREEMPTION == 1 )
                         {
-/**********************************************************Missing Change**********************************************/													
-													#if ( configUSE_EDF_SCHEDULER == 1)
-			                    {
-														
-														/* Preemption is on, but a context switch should
-                             * only be performed if the unblocked task has a
-                             * a deadline that is equal to or lower than the
-                             * currently executing task. */
-														if(  pxTCB->xStateListItem.xItemValue <= pxCurrentTCB->xStateListItem.xItemValue )
-                            {
-                                xSwitchRequired = pdTRUE;
-                            }
-                            else
-                            {
-                                mtCOVERAGE_TEST_MARKER();
-                            }			                     
-			                    }
-/************************************************************************************************************************/													
-													#else
-													{
+
 											
                             /* Preemption is on, but a context switch should
                              * only be performed if the unblocked task has a
@@ -3030,8 +3000,7 @@ BaseType_t xTaskIncrementTick( void )
                             {
                                 mtCOVERAGE_TEST_MARKER();
                             }
-												  }
-													#endif
+												  
                         }
                     #endif /* configUSE_PREEMPTION */
                 }
@@ -3666,15 +3635,6 @@ static portTASK_FUNCTION( prvIdleTask, pvParameters )
     for( ; ; )
     {
 			
-			
-/************************************************Missing Change************************************************************/
-			/*Update the deadline of the IdleTask. */
-			#if ( configUSE_EDF_SCHEDULER == 1 )
-			{
-			   listSET_LIST_ITEM_VALUE( &( ( prvGetTCBFromHandle(xIdleTaskHandle))->xStateListItem ), ( ( prvGetTCBFromHandle(xIdleTaskHandle)))->xTaskPeriod + xTickCount);
-			}
-			#endif
-/*************************************************************************************************************************/
 			
         /* See if any tasks have deleted themselves - if so then the idle task
          * is responsible for freeing the deleted task's TCB and stack. */
