@@ -193,7 +193,6 @@ int main( void )
 										
 
 	/* Now all the tasks have been started - start the scheduler.
-
 	NOTE : Tasks run in system mode and the scheduler runs in Supervisor mode.
 	The processor MUST be in supervisor mode when vTaskStartScheduler is 
 	called.  The demo applications included in the FreeRTOS.org download switch
@@ -540,4 +539,3 @@ void vApplicationTickHook(void)
 	GPIO_write(PORT_0, PIN0, PIN_IS_LOW);
 }
 /**********************************************************************************************************************************/
-
