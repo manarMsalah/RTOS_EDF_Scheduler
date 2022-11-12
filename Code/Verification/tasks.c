@@ -2702,7 +2702,7 @@ char * pcTaskGetName( TaskHandle_t xTaskToQuery ) /*lint !e971 Unqualified char 
                 /* Fill in an TaskStatus_t structure with information on each
                  * task in the Ready state. */
 /****************************************************************Missing change***********************************************************/							
-							if(configUSE_EDF_SCHEDULER == 0)
+							#if(configUSE_EDF_SCHEDULER == 0)
 							{
                 do
                 {
@@ -2710,10 +2710,11 @@ char * pcTaskGetName( TaskHandle_t xTaskToQuery ) /*lint !e971 Unqualified char 
                     uxTask += prvListTasksWithinSingleList( &( pxTaskStatusArray[ uxTask ] ), &( pxReadyTasksLists[ uxQueue ] ), eReady );
                 } while( uxQueue > ( UBaseType_t ) tskIDLE_PRIORITY ); /*lint !e961 MISRA exception as the casts are only redundant for some ports. */
 							}
-							else
+							#else
 							{
                     uxTask += prvListTasksWithinSingleList( &( pxTaskStatusArray[ uxTask ] ), &( xReadyTasksListEDF ), eReady );   
 						  }
+							#endif
 /*****************************************************************************************************************************************/
                 /* Fill in an TaskStatus_t structure with information on each
                  * task in the Blocked state. */
@@ -4837,8 +4838,7 @@ static void prvResetNextTaskUnblockTime( void )
         if( pxTaskStatusArray != NULL )
         {
             /* Generate the (binary) data. */
-            uxArraySize = 
-					( pxTaskStatusArray, uxArraySize, &ulTotalTime );
+            uxArraySize = uxTaskGetSystemState( pxTaskStatusArray, uxArraySize, &ulTotalTime );
 
             /* For percentage calculations. */
             ulTotalTime /= 100UL;
